@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Matrícula — validação em quatro níveis</title>
+<style>body{font:16px system-ui;background:#eef3fa;color:#19324c;margin:0;padding:24px}main{max-width:760px;margin:auto;background:white;padding:28px;border-radius:16px}h1{margin-top:0}label{display:block;margin-top:16px;font-weight:600}input,select,button{box-sizing:border-box;width:100%;padding:12px;font:inherit;border:1px solid #b4c3d3;border-radius:8px;margin-top:6px}button{background:#1456b8;color:white;border:0;cursor:pointer}button:disabled{opacity:.5}small{display:block;font-weight:400;color:#5b6c80}.erro{color:#ad172f;min-height:1em}#resultado{white-space:pre-wrap;padding:16px;background:#edf2fa;border-radius:8px;margin-top:20px}ol{line-height:1.8}.nota{font-size:14px;color:#52647a}</style></head>
+<body><main><h1>Matrícula online</h1><p>Exemplo didático: sintático → semântico → negócio → integridade.</p><p class="nota">Use somente dados fictícios nesta demonstração local.</p>
+<form id="form" novalidate>
+<label>Nome<input name="nome" id="nome" required maxlength="120" autocomplete="name"><small class="erro" id="erro-nome"></small></label>
+<label>E-mail<input name="email" id="email" type="email" required maxlength="254" autocomplete="email"><small class="erro" id="erro-email"></small></label>
+<label>Data de nascimento<input name="nascimento" id="nascimento" type="date" required><small class="erro" id="erro-nascimento"></small></label>
+<label>Turma<select name="turma_id" id="turma_id" required><option value="">Carregando…</option></select><small class="erro" id="erro-turma_id"></small></label>
+<button id="enviar" type="submit">Confirmar matrícula</button></form>
+<div id="resultado" role="status" aria-live="polite">Nenhum dado enviado.</div>
+<h2>Pipeline de execução</h2><ol><li>Formulário coleta e confere os campos.</li><li>API repete as validações sintáticas e semânticas.</li><li>BEGIN IMMEDIATE: bloqueia a escrita concorrente.</li><li>Confere existência, duplicidade, inscrições abertas e vagas.</li><li>Cadastra aluno, reduz vaga e grava matrícula na mesma transação.</li><li>COMMIT → comprovante. Falha → ROLLBACK, sem gravação parcial.</li></ol>
+<p class="nota">Sem autenticação: demonstração acadêmica, não sistema de produção. SQLite bloqueia escritores no banco, não uma linha isolada.</p>
+<script>
+const form=document.querySelector('#form'), resultado=document.querySelector('#resultado'), botao=document.querySelector('#enviar');
+async function carregarTurmas(){
+ const selecao=document.querySelector('#turma_id'), anterior=selecao.value;
+ const resposta=await fetch('/api/turmas');if(!resposta.ok)throw Error('Falha ao carregar turmas');
+ const dados=await resposta.json();selecao.replaceChildren(new Option('Selecione uma turma',''));
+ for(const t of dados.turmas){const texto=`${t.nome} — ${t.vagas} vaga(s)${t.inscricoes_abertas?'':' — encerrada'}`;selecao.add(new Option(texto,t.id));}
+ selecao.value=anterior;
+}
+form.addEventListener('submit',async evento=>{
+ evento.preventDefault();document.querySelectorAll('.erro').forEach(el=>el.textContent='');
+ // O navegador ajuda, mas a API também valida: o cliente pode ser contornado.
+ if(!form.reportValidity())return;
+ botao.disabled=true;resultado.textContent='Validando…';
+ try{
+ const dados={nome:form.nome.value,email:form.email.value,nascimento:form.nascimento.value,turma_id:Number(form.turma_id.value)};
+ const resposta=await fetch('/api/matriculas',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(dados)});
+ const corpo=await resposta.json();
+ if(!resposta.ok){resultado.textContent=`Não confirmado — nível: ${corpo.nivel}\n${corpo.mensagem}`;
+ for(const [campo,msg] of Object.entries(corpo.campos||{})){const el=document.getElementById('erro-'+campo);if(el)el.textContent=msg;}
+ }else{const c=corpo.comprovante;resultado.textContent=`${corpo.mensagem}\nComprovante nº ${c.matricula_id}\nAluno: ${c.aluno}\nTurma: ${c.turma}\nVagas restantes: ${c.vagas_restantes}`;}
+ // Não limpar o formulário: preserva os dados em todas as falhas.
+ await carregarTurmas();
+ }catch(erro){resultado.textContent='Falha de comunicação. Não foi possível verificar a confirmação. Confira antes de repetir o envio.';}
+ finally{botao.disabled=false;}
+});
+carregarTurmas().catch(()=>resultado.textContent='Não foi possível carregar as turmas. Verifique se o servidor está funcionando.');
+</script></main></body></html>
