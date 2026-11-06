@@ -1,10 +1,335 @@
 <!doctype html>
-<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Exercício prático de validação de dados: matrícula online, quatro níveis de validação, transações e integridade. Por Endeson Marcell."><meta name="theme-color" content="#163157"><title>Matrícula Lab · Exercício prático</title><link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="/style.css"><script type="module" src="/app.mjs"></script></head>
-<body><header class="topbar"><a class="brand" href="#inicio" aria-label="Matrícula Lab, início"><span class="brand-icon">M<span>✓</span></span><strong>Matrícula<span>Lab</span></strong></a><nav aria-label="Navegação principal"><a href="#laboratorio">Experimentar</a><a href="#conceitos">Como funciona</a><a href="https://github.com/endeson12/matricula-online-validacao" target="_blank" rel="noopener">Ver código ↗</a></nav><span class="academic">EXERCÍCIO PRÁTICO</span></header>
-<main id="inicio"><section class="hero"><div><p class="eyebrow"><span></span> LABORATÓRIO DE VALIDAÇÃO DE DADOS</p><h1>Antes de confirmar,<br>é preciso <em>validar.</em></h1><p class="intro">Uma matrícula. Quatro níveis de conferência.<br>Explore o caminho entre preencher um formulário e manter os registros consistentes.</p><a class="primary hero-cta" href="#laboratorio">Abrir o laboratório <span>↓</span></a><p class="byline">Desenvolvido por <a href="https://github.com/endeson12">Endeson Marcell</a> · Projeto acadêmico</p></div><div class="ticket" aria-label="Quatro etapas de validação"><div class="ticket-head"><span>FICHA DE MATRÍCULA</span><span class="ticket-dot"></span></div><p class="ticket-title">Conferir para confirmar.</p><div class="ticket-step"><span>01</span><div><strong>Formato</strong><small>O e-mail está completo?</small></div><b>↗</b></div><div class="ticket-step"><span>02</span><div><strong>Sentido</strong><small>O nascimento faz sentido?</small></div><b>↗</b></div><div class="ticket-step"><span>03</span><div><strong>Regra</strong><small>A turma ainda tem vaga?</small></div><b>↗</b></div><div class="ticket-step"><span>04</span><div><strong>Registro</strong><small>A matrícula já existe?</small></div><b>↗</b></div><div class="ticket-foot"><span class="barcode" aria-hidden="true"></span><span>VALIDAÇÃO / 4 NÍVEIS</span></div></div></section>
-<section id="laboratorio" class="lab"><div class="section-heading"><div><p class="eyebrow">APRENDA EXPERIMENTANDO</p><h2>Sua vez de testar.</h2></div><button class="quiet" id="reiniciar" type="button">↺ Reiniciar demonstração</button></div><div class="notice"><span aria-hidden="true">ⓘ</span><p><strong>Demonstração no navegador.</strong> Os dados ficam apenas neste navegador, via IndexedDB; não são enviados a uma API nem compartilhados entre dispositivos. Use dados fictícios. A API Python + SQLite está no repositório.</p></div>
-<div class="lab-grid"><section class="form-card" aria-labelledby="form-title"><div class="card-heading"><span class="card-number">01 / ENTRADA</span><span class="mini-tag">Formulário</span></div><h3 id="form-title">Nova matrícula</h3><p class="muted">Preencha os dados e acompanhe a validação ao lado.</p><div class="scenarios" aria-label="Cenários de teste"><button type="button" data-cenario="valido">Dados válidos</button><button type="button" data-cenario="email">E-mail inválido</button><button type="button" data-cenario="futuro">Data futura</button><button type="button" data-cenario="fechada">Turma fechada</button></div><form id="form" novalidate><label for="nome">Nome do aluno</label><input id="nome" name="nome" placeholder="Ex.: Ana Teste" autocomplete="off" maxlength="120" aria-describedby="erro-nome"><small class="field-error" id="erro-nome"></small><div class="field-row"><div><label for="email">E-mail</label><input id="email" name="email" type="email" placeholder="ana@example.com" autocomplete="off" maxlength="254" aria-describedby="erro-email"><small class="field-error" id="erro-email"></small></div><div><label for="nascimento">Nascimento</label><input id="nascimento" name="nascimento" type="date" aria-describedby="erro-nascimento"><small class="field-error" id="erro-nascimento"></small></div></div><label for="turma_id">Turma desejada</label><select id="turma_id" name="turma_id" aria-describedby="erro-turma_id"><option value="">Selecione uma turma</option></select><small class="field-error" id="erro-turma_id"></small><div class="course-list" id="turmas" aria-label="Disponibilidade das turmas"></div><button class="primary submit" id="enviar" type="submit">Validar e matricular <span>→</span></button><p class="footnote">Os campos permanecem preenchidos se houver um erro.</p></form></section>
-<aside class="monitor" aria-labelledby="monitor-title"><div class="card-heading"><span class="card-number">02 / PROCESSAMENTO</span><span class="live"><i></i> INTERATIVO</span></div><h3 id="monitor-title">O que acontece por dentro</h3><p class="monitor-intro">Acompanhe o resultado dos quatro níveis.</p><ol class="validation-list"><li data-nivel="sintatico"><span class="level-icon">01</span><div><strong>Sintático</strong><small>Campos, tipos, e-mail e data válidos.</small></div><span class="state">Aguardando</span></li><li data-nivel="semantico"><span class="level-icon">02</span><div><strong>Semântico</strong><small>Nome e nascimento com sentido.</small></div><span class="state">Aguardando</span></li><li data-nivel="negocio"><span class="level-icon">03</span><div><strong>Negócio</strong><small>Inscrições abertas e vagas disponíveis.</small></div><span class="state">Aguardando</span></li><li data-nivel="integridade"><span class="level-icon">04</span><div><strong>Integridade</strong><small>Referências e matrícula sem repetição.</small></div><span class="state">Aguardando</span></li></ol><div id="resultado" class="result" role="status" aria-live="polite"><strong>Pronto para começar.</strong><p>Escolha um cenário ou preencha o formulário.</p></div><details class="response"><summary>Ver resposta do serviço local <span>{ }</span></summary><pre id="resposta-json">Nenhuma operação realizada.</pre></details><p class="monitor-note">A ordem acima organiza os conceitos. Na transação, existência e duplicidade são conferidas antes das regras de vaga.</p></aside></div>
-<div class="history-card"><div><span class="card-number">03 / CONFIRMAÇÕES</span><h3>Matrículas confirmadas <span id="total" class="count">0</span></h3></div><div id="historico" class="empty">As matrículas aparecem aqui somente depois da confirmação da transação.</div></div></section>
-<section id="conceitos" class="concepts"><div class="section-heading"><div><p class="eyebrow">DO FORMULÁRIO AO REGISTRO</p><h2>Não basta parecer correto.</h2></div></div><div class="concept-grid"><article><span>01 · SINTÁTICO</span><h3>O formato está certo?</h3><p><code>ana@</code> está incompleto. O sistema indica o campo e pede correção, sem gravar nada.</p></article><article><span>02 · SEMÂNTICO</span><h3>O valor faz sentido?</h3><p>Uma data futura pode ter formato válido, mas não serve como nascimento.</p></article><article><span>03 · NEGÓCIO</span><h3>A regra permite?</h3><p>Inscrições abertas e vaga disponível. Uma turma lotada não pode receber outro aluno.</p></article><article><span>04 · INTEGRIDADE</span><h3>O registro é consistente?</h3><p>Referências válidas e matrícula única. Se a operação falhar, as mudanças são desfeitas juntas.</p></article></div><div class="pipeline"><div><p class="eyebrow">DUAS IMPLEMENTAÇÕES, O MESMO CONCEITO</p><h3>Confirmar tudo.<br>Ou não gravar nada.</h3></div><div><p><strong>Online:</strong> formulário → serviço JavaScript → transação IndexedDB → confirmação ou abort.</p><p><strong>Python local:</strong> formulário → API → BEGIN IMMEDIATE → banco SQLite → COMMIT ou ROLLBACK.</p><p class="muted">A disputa pela última vaga é serializada entre abas da mesma origem na demonstração. Dispositivos diferentes têm bancos independentes. Em produção, use API autenticada e banco compartilhado.</p></div></div></section></main>
-<footer><a class="brand" href="#inicio"><strong>Matrícula<span>Lab</span></strong></a><p>Exercício prático · Endeson Marcell<br><span>Exemplo didático, sem vínculo institucional com o SIGAA/UFRN.</span></p><a href="https://github.com/endeson12/matricula-online-validacao" target="_blank" rel="noopener">Código aberto ↗</a></footer></body></html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta
+      name="description"
+      content="Exercício prático de validação de dados: matrícula online, quatro níveis de validação, transações e integridade. Por Endeson Marcell."
+    />
+    <meta name="theme-color" content="#163157" />
+    <title>Matrícula Lab · Exercício prático</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/style.css" />
+    <script type="module" src="/app.mjs"></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="#inicio" aria-label="Matrícula Lab, início"
+        ><span class="brand-icon">M<span>✓</span></span
+        ><strong>Matrícula<span>Lab</span></strong></a
+      >
+      <nav aria-label="Navegação principal">
+        <a href="#laboratorio">Experimentar</a
+        ><a href="#conceitos">Como funciona</a
+        ><a
+          href="https://github.com/endeson12/matricula-online-validacao"
+          target="_blank"
+          rel="noopener"
+          >Ver código ↗</a
+        >
+      </nav>
+      <span class="academic">EXERCÍCIO PRÁTICO</span>
+    </header>
+    <main id="inicio">
+      <section class="hero">
+        <div>
+          <p class="eyebrow"><span></span> LABORATÓRIO DE VALIDAÇÃO DE DADOS</p>
+          <h1>Antes de confirmar,<br />é preciso <em>validar.</em></h1>
+          <p class="intro">
+            Uma matrícula. Quatro níveis de conferência.<br />Explore o caminho
+            entre preencher um formulário e manter os registros consistentes.
+          </p>
+          <a class="primary hero-cta" href="#laboratorio"
+            >Abrir o laboratório <span>↓</span></a
+          >
+          <p class="byline">
+            Desenvolvido por
+            <a href="https://github.com/endeson12">Endeson Marcell</a> · Projeto
+            acadêmico
+          </p>
+        </div>
+        <div class="ticket" aria-label="Quatro etapas de validação">
+          <div class="ticket-head">
+            <span>FICHA DE MATRÍCULA</span><span class="ticket-dot"></span>
+          </div>
+          <p class="ticket-title">Conferir para confirmar.</p>
+          <div class="ticket-step">
+            <span>01</span>
+            <div>
+              <strong>Formato</strong><small>O e-mail está completo?</small>
+            </div>
+            <b>↗</b>
+          </div>
+          <div class="ticket-step">
+            <span>02</span>
+            <div>
+              <strong>Sentido</strong><small>O nascimento faz sentido?</small>
+            </div>
+            <b>↗</b>
+          </div>
+          <div class="ticket-step">
+            <span>03</span>
+            <div>
+              <strong>Regra</strong><small>A turma ainda tem vaga?</small>
+            </div>
+            <b>↗</b>
+          </div>
+          <div class="ticket-step">
+            <span>04</span>
+            <div>
+              <strong>Registro</strong><small>A matrícula já existe?</small>
+            </div>
+            <b>↗</b>
+          </div>
+          <div class="ticket-foot">
+            <span class="barcode" aria-hidden="true"></span
+            ><span>VALIDAÇÃO / 4 NÍVEIS</span>
+          </div>
+        </div>
+      </section>
+      <section id="laboratorio" class="lab">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">APRENDA EXPERIMENTANDO</p>
+            <h2>Sua vez de testar.</h2>
+          </div>
+          <button class="quiet" id="reiniciar" type="button">
+            ↺ Reiniciar demonstração
+          </button>
+        </div>
+        <div class="notice">
+          <span aria-hidden="true">ⓘ</span>
+          <p>
+            <strong>Demonstração no navegador.</strong> Os dados ficam apenas
+            neste navegador, via IndexedDB; não são enviados a uma API nem
+            compartilhados entre dispositivos. Use dados fictícios. A API Python
+            + SQLite está no repositório.
+          </p>
+        </div>
+        <div class="lab-grid">
+          <section class="form-card" aria-labelledby="form-title">
+            <div class="card-heading">
+              <span class="card-number">01 / ENTRADA</span
+              ><span class="mini-tag">Formulário</span>
+            </div>
+            <h3 id="form-title">Nova matrícula</h3>
+            <p class="muted">
+              Preencha os dados e acompanhe a validação ao lado.
+            </p>
+            <div class="scenarios" aria-label="Cenários de teste">
+              <button type="button" data-cenario="valido">Dados válidos</button
+              ><button type="button" data-cenario="email">
+                E-mail inválido</button
+              ><button type="button" data-cenario="futuro">Data futura</button
+              ><button type="button" data-cenario="fechada">
+                Turma fechada
+              </button>
+            </div>
+            <form id="form" novalidate>
+              <label for="nome">Nome do aluno</label
+              ><input
+                id="nome"
+                name="nome"
+                placeholder="Ex.: Ana Teste"
+                autocomplete="off"
+                maxlength="120"
+                aria-describedby="erro-nome"
+              /><small class="field-error" id="erro-nome"></small>
+              <div class="field-row">
+                <div>
+                  <label for="email">E-mail</label
+                  ><input
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder="ana@example.com"
+                    autocomplete="off"
+                    maxlength="254"
+                    aria-describedby="erro-email"
+                  /><small class="field-error" id="erro-email"></small>
+                </div>
+                <div>
+                  <label for="nascimento">Nascimento</label
+                  ><input
+                    id="nascimento"
+                    name="nascimento"
+                    type="date"
+                    aria-describedby="erro-nascimento"
+                  /><small class="field-error" id="erro-nascimento"></small>
+                </div>
+              </div>
+              <label for="turma_id">Turma desejada</label
+              ><select
+                id="turma_id"
+                name="turma_id"
+                aria-describedby="erro-turma_id"
+              >
+                <option value="">Selecione uma turma</option></select
+              ><small class="field-error" id="erro-turma_id"></small>
+              <div
+                class="course-list"
+                id="turmas"
+                aria-label="Disponibilidade das turmas"
+              ></div>
+              <button class="primary submit" id="enviar" type="submit">
+                Validar e matricular <span>→</span>
+              </button>
+              <p class="footnote">
+                Os campos permanecem preenchidos se houver um erro.
+              </p>
+            </form>
+          </section>
+          <aside class="monitor" aria-labelledby="monitor-title">
+            <div class="card-heading">
+              <span class="card-number">02 / PROCESSAMENTO</span
+              ><span class="live"><i></i> INTERATIVO</span>
+            </div>
+            <h3 id="monitor-title">O que acontece por dentro</h3>
+            <p class="monitor-intro">
+              Acompanhe o resultado dos quatro níveis.
+            </p>
+            <ol class="validation-list">
+              <li data-nivel="sintatico">
+                <span class="level-icon">01</span>
+                <div>
+                  <strong>Sintático</strong
+                  ><small>Campos, tipos, e-mail e data válidos.</small>
+                </div>
+                <span class="state">Aguardando</span>
+              </li>
+              <li data-nivel="semantico">
+                <span class="level-icon">02</span>
+                <div>
+                  <strong>Semântico</strong
+                  ><small>Nome e nascimento com sentido.</small>
+                </div>
+                <span class="state">Aguardando</span>
+              </li>
+              <li data-nivel="negocio">
+                <span class="level-icon">03</span>
+                <div>
+                  <strong>Negócio</strong
+                  ><small>Inscrições abertas e vagas disponíveis.</small>
+                </div>
+                <span class="state">Aguardando</span>
+              </li>
+              <li data-nivel="integridade">
+                <span class="level-icon">04</span>
+                <div>
+                  <strong>Integridade</strong
+                  ><small>Referências e matrícula sem repetição.</small>
+                </div>
+                <span class="state">Aguardando</span>
+              </li>
+            </ol>
+            <div id="resultado" class="result" role="status" aria-live="polite">
+              <strong>Pronto para começar.</strong>
+              <p>Escolha um cenário ou preencha o formulário.</p>
+            </div>
+            <details class="response">
+              <summary>Ver resposta do serviço local <span>{ }</span></summary>
+              <pre id="resposta-json">Nenhuma operação realizada.</pre>
+            </details>
+            <p class="monitor-note">
+              A ordem acima organiza os conceitos. Na transação, existência e
+              duplicidade são conferidas antes das regras de vaga.
+            </p>
+          </aside>
+        </div>
+        <div class="history-card">
+          <div>
+            <span class="card-number">03 / CONFIRMAÇÕES</span>
+            <h3>
+              Matrículas confirmadas <span id="total" class="count">0</span>
+            </h3>
+          </div>
+          <div id="historico" class="empty">
+            As matrículas aparecem aqui somente depois da confirmação da
+            transação.
+          </div>
+        </div>
+      </section>
+      <section id="conceitos" class="concepts">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">DO FORMULÁRIO AO REGISTRO</p>
+            <h2>Não basta parecer correto.</h2>
+          </div>
+        </div>
+        <div class="concept-grid">
+          <article>
+            <span>01 · SINTÁTICO</span>
+            <h3>O formato está certo?</h3>
+            <p>
+              <code>ana@</code> está incompleto. O sistema indica o campo e pede
+              correção, sem gravar nada.
+            </p>
+          </article>
+          <article>
+            <span>02 · SEMÂNTICO</span>
+            <h3>O valor faz sentido?</h3>
+            <p>
+              Uma data futura pode ter formato válido, mas não serve como
+              nascimento.
+            </p>
+          </article>
+          <article>
+            <span>03 · NEGÓCIO</span>
+            <h3>A regra permite?</h3>
+            <p>
+              Inscrições abertas e vaga disponível. Uma turma lotada não pode
+              receber outro aluno.
+            </p>
+          </article>
+          <article>
+            <span>04 · INTEGRIDADE</span>
+            <h3>O registro é consistente?</h3>
+            <p>
+              Referências válidas e matrícula única. Se a operação falhar, as
+              mudanças são desfeitas juntas.
+            </p>
+          </article>
+        </div>
+        <div class="pipeline">
+          <div>
+            <p class="eyebrow">DUAS IMPLEMENTAÇÕES, O MESMO CONCEITO</p>
+            <h3>Confirmar tudo.<br />Ou não gravar nada.</h3>
+          </div>
+          <div>
+            <p>
+              <strong>Online:</strong> formulário → serviço JavaScript →
+              transação IndexedDB → confirmação ou abort.
+            </p>
+            <p>
+              <strong>Python local:</strong> formulário → API → BEGIN IMMEDIATE
+              → banco SQLite → COMMIT ou ROLLBACK.
+            </p>
+            <p class="muted">
+              A disputa pela última vaga é serializada entre abas da mesma
+              origem na demonstração. Dispositivos diferentes têm bancos
+              independentes. Em produção, use API autenticada e banco
+              compartilhado.
+            </p>
+          </div>
+        </div>
+      </section>
+    </main>
+    <footer>
+      <a class="brand" href="#inicio"
+        ><strong>Matrícula<span>Lab</span></strong></a
+      >
+      <p>
+        Exercício prático · Endeson Marcell<br /><span
+          >Exemplo didático, sem vínculo institucional com o SIGAA/UFRN.</span
+        >
+      </p>
+      <a
+        href="https://github.com/endeson12/matricula-online-validacao"
+        target="_blank"
+        rel="noopener"
+        >Código aberto ↗</a
+      >
+    </footer>
+  </body>
+</html>

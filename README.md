@@ -1,6 +1,7 @@
 <div align="center">
 
 # Matrícula Lab
+
 ### Exercício prático de validação de dados
 
 **Formato, sentido, regra e registro — antes de confirmar uma matrícula.**
@@ -22,26 +23,26 @@ Exercício acadêmico desenvolvido por **Endeson Marcell**: implementar validaç
 
 ## Duas versões, com limites explícitos
 
-| | Demonstração online | Implementação local completa |
-|---|---|---|
-| Interface | HTML, CSS e JavaScript | HTML e JavaScript |
-| Execução | Navegador, hospedado na Vercel | Servidor Python, biblioteca padrão |
-| Persistência | IndexedDB no navegador | Banco SQLite em arquivo |
-| API HTTP | **Não há**; serviço JavaScript local | `GET /api/turmas`, `POST /api/matriculas` |
-| Atomicidade | Transação `readwrite`, confirmação ou `abort` | `BEGIN IMMEDIATE`, `COMMIT` e `ROLLBACK` |
-| Concorrência | Serialização entre abas da mesma origem | Serialização de escritores no SQLite |
-| Compartilhamento | Somente mesmo navegador/perfil/origem | Clientes que acessam o mesmo servidor/banco |
-| Integridade | Índices únicos e verificações do serviço | `FOREIGN KEY`, `UNIQUE` e `CHECK` no banco |
+|                  | Demonstração online                           | Implementação local completa                |
+| ---------------- | --------------------------------------------- | ------------------------------------------- |
+| Interface        | HTML, CSS e JavaScript                        | HTML e JavaScript                           |
+| Execução         | Navegador, hospedado na Vercel                | Servidor Python, biblioteca padrão          |
+| Persistência     | IndexedDB no navegador                        | Banco SQLite em arquivo                     |
+| API HTTP         | **Não há**; serviço JavaScript local          | `GET /api/turmas`, `POST /api/matriculas`   |
+| Atomicidade      | Transação `readwrite`, confirmação ou `abort` | `BEGIN IMMEDIATE`, `COMMIT` e `ROLLBACK`    |
+| Concorrência     | Serialização entre abas da mesma origem       | Serialização de escritores no SQLite        |
+| Compartilhamento | Somente mesmo navegador/perfil/origem         | Clientes que acessam o mesmo servidor/banco |
+| Integridade      | Índices únicos e verificações do serviço      | `FOREIGN KEY`, `UNIQUE` e `CHECK` no banco  |
 
 **A Vercel hospeda apenas `public/`.** A demonstração não envia os dados do formulário a um servidor. Outros visitantes têm seus próprios bancos locais. O código Python permanece em `python/` para estudar e demonstrar o fluxo real **formulário → API → banco** exigido pelo exercício. Nenhuma persistência SQLite efêmera em função serverless é apresentada como banco compartilhado.
 
 ## O que o professor pediu
 
-| Nível | Exemplo | Estratégia de falha |
-|---|---|---|
-| **Sintático** | E-mail `ana@`, campo vazio, tipo incorreto ou data impossível | Indicar campo e pedir correção, sem gravação. |
-| **Semântico** | Nascimento no futuro | Explicar por que o valor não faz sentido, sem gravação. |
-| **Negócio** | Inscrições encerradas ou turma sem vagas | Recusar matrícula e orientar escolha de outra turma. |
+| Nível           | Exemplo                                                             | Estratégia de falha                                                   |
+| --------------- | ------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| **Sintático**   | E-mail `ana@`, campo vazio, tipo incorreto ou data impossível       | Indicar campo e pedir correção, sem gravação.                         |
+| **Semântico**   | Nascimento no futuro                                                | Explicar por que o valor não faz sentido, sem gravação.               |
+| **Negócio**     | Inscrições encerradas ou turma sem vagas                            | Recusar matrícula e orientar escolha de outra turma.                  |
 | **Integridade** | Turma ausente, e-mail com cadastro divergente ou matrícula repetida | Recusar conflito; se a transação começou, desfazer todas as mudanças. |
 
 Os dados preenchidos permanecem no formulário quando ocorre uma falha. Pessoas diferentes podem ter o mesmo nome: duplicidade é por **aluno + turma**, não pelo nome.
