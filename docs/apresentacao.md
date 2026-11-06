@@ -6,7 +6,7 @@
 
 ## 2. Os quatro níveis e suas falhas
 
-1. Clique em **E-mail inválido**, depois em **Validar e matricular**: o formato `ana@` é rejeitado. É a validação sintática. Nada é gravado e os campos continuam preenchidos.
+1. Clique em **E-mail inválido**, depois em **Matricular**: o formato `ana@` é rejeitado. É a validação sintática. Nada é gravado e os campos continuam preenchidos.
 2. Clique em **Data futura** e valide: a data tem formato válido, mas não faz sentido como nascimento. É a validação semântica.
 3. Clique em **Turma fechada** e valide: os dados podem estar corretos, mas a regra não permite a matrícula. Escolher outra turma é a saída.
 4. Clique em **Dados válidos** e confirme. Depois reenvie os mesmos dados: a matrícula repetida é rejeitada por integridade. A vaga não é descontada novamente.

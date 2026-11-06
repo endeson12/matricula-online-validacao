@@ -1,223 +1,115 @@
-import { listar, matricular, reiniciar, Falha } from "./store.mjs";
-const $ = (s) => document.querySelector(s),
-  form = $("#form"),
-  botao = $("#enviar");
-const nomes = {
-  sintatico: "Sintático",
-  semantico: "Semântico",
-  negocio: "Negócio",
-  integridade: "Integridade",
-  persistencia: "Persistência",
-};
-const canal = globalThis.BroadcastChannel
-  ? new BroadcastChannel("matricula-lab")
-  : null;
-function el(tag, texto, classe) {
-  const e = document.createElement(tag);
-  if (texto !== undefined) e.textContent = texto;
-  if (classe) e.className = classe;
-  return e;
+import { listar, matricular, reiniciar, Falha } from './store.mjs';
+
+const form = document.getElementById('form');
+const botao = document.getElementById('enviar');
+const mensagem = document.getElementById('resultado');
+const nomes = { sintatico: 'Sintático', semantico: 'Semântico', negocio: 'Negócio', integridade: 'Integridade', persistencia: 'Persistência' };
+const canal = window.BroadcastChannel ? new BroadcastChannel('matricula-lab') : null;
+
+function mostrar(texto, tipo = '') {
+  mensagem.textContent = texto;
+  mensagem.className = 'result ' + tipo;
 }
-function resultado(titulo, texto, tipo = "") {
-  const caixa = $("#resultado");
-  caixa.className = "result " + tipo;
-  caixa.replaceChildren(el("strong", titulo), el("p", texto));
+
+function limparErros() {
+  document.querySelectorAll('.field-error').forEach(campo => campo.textContent = '');
+  form.querySelectorAll('input, select').forEach(campo => campo.removeAttribute('aria-invalid'));
 }
-function niveis(falha = null, sucesso = false) {
-  // Não afirmar que um nível passou se o fluxo parou antes de verificá-lo.
-  const anteriores =
-    falha === "semantico"
-      ? ["sintatico"]
-      : falha === "negocio" || falha === "integridade"
-        ? ["sintatico", "semantico"]
-        : [];
-  document.querySelectorAll("[data-nivel]").forEach((item) => {
-    const n = item.dataset.nivel;
-    item.className =
-      sucesso || anteriores.includes(n) ? "ok" : n === falha ? "fail" : "";
-    item.querySelector(".state").textContent =
-      sucesso || anteriores.includes(n)
-        ? "Validado"
-        : n === falha
-          ? "Rejeitado"
-          : "Aguardando";
-  });
-}
+
 async function atualizar() {
-  const { turmas, matriculas } = await listar(),
-    selecao = $("#turma_id"),
-    atual = selecao.value;
-  selecao.replaceChildren(new Option("Selecione uma turma", ""));
-  const lista = $("#turmas");
-  lista.replaceChildren();
-  for (const t of turmas) {
-    selecao.add(new Option(`${t.nome} · ${t.periodo.split(" · ")[0]}`, t.id));
-    const item = el("div", undefined, "course"),
-      info = el("div");
-    info.append(el("strong", t.nome), el("small", t.periodo));
-    let texto = t.inscricoes_abertas
-      ? `${t.vagas} vaga${t.vagas === 1 ? "" : "s"}`
-      : "Encerrada";
-    const pill = el(
-      "span",
-      texto,
-      "pill" +
-        (!t.inscricoes_abertas || t.vagas === 0
-          ? " closed"
-          : t.vagas === 1
-            ? " last"
-            : ""),
-    );
-    item.append(info, pill);
-    lista.append(item);
+  const dados = await listar();
+  const select = document.getElementById('turma_id');
+  const selecionada = select.value;
+  select.replaceChildren(new Option('Selecione uma turma', ''));
+  const tabela = document.getElementById('turmas');
+  tabela.replaceChildren();
+
+  for (const turma of dados.turmas) {
+    select.add(new Option(turma.nome + ' — ' + turma.periodo.split(' · ')[0], turma.id));
+    const linha = document.createElement('tr');
+    linha.className = 'course';
+    const nome = document.createElement('td');
+    nome.textContent = turma.nome;
+    const periodo = document.createElement('small');
+    periodo.textContent = turma.periodo;
+    nome.append(periodo);
+    const situacao = document.createElement('td');
+    situacao.textContent = turma.inscricoes_abertas ? turma.vagas + ' vaga(s)' : 'Inscrições encerradas';
+    linha.append(nome, situacao);
+    tabela.append(linha);
   }
-  selecao.value = atual;
-  $("#total").textContent = String(matriculas.length);
-  const historico = $("#historico");
+  select.value = selecionada;
+  document.getElementById('total').textContent = dados.matriculas.length;
+  const historico = document.getElementById('historico');
   historico.replaceChildren();
-  historico.className = matriculas.length ? "" : "empty";
-  if (!matriculas.length)
-    historico.textContent =
-      "As matrículas aparecem aqui somente depois da confirmação da transação.";
-  for (const m of [...matriculas].reverse()) {
-    const linha = el("div", undefined, "enrollment"),
-      info = el("div");
-    info.append(el("strong", m.aluno), el("small", m.turma));
-    linha.append(
-      info,
-      el("span", `CONFIRMADA · #${String(m.id).padStart(3, "0")}`),
-    );
-    historico.append(linha);
+  if (!dados.matriculas.length) historico.textContent = 'Nenhuma matrícula realizada.';
+  for (const matricula of dados.matriculas) {
+    const item = document.createElement('div');
+    item.className = 'enrollment';
+    item.textContent = '#' + matricula.id + ' — ' + matricula.aluno;
+    const turma = document.createElement('small');
+    turma.textContent = matricula.turma;
+    item.append(turma);
+    historico.append(item);
   }
 }
-canal?.addEventListener("message", () => atualizar().catch(() => {}));
-form.addEventListener("submit", async (evento) => {
+
+form.addEventListener('submit', async evento => {
   evento.preventDefault();
+  limparErros();
   botao.disabled = true;
-  document
-    .querySelectorAll(".field-error")
-    .forEach((e) => (e.textContent = ""));
-  form
-    .querySelectorAll("input,select")
-    .forEach((e) => e.removeAttribute("aria-invalid"));
-  const entrada = {
+  const dados = {
     nome: form.elements.nome.value,
     email: form.elements.email.value,
     nascimento: form.elements.nascimento.value,
-    turma_id: Number(form.elements.turma_id.value),
+    turma_id: Number(form.elements.turma_id.value)
   };
   try {
-    const resposta = await matricular(entrada);
-    niveis(null, true);
-    const c = resposta.comprovante;
-    resultado(
-      "Matrícula confirmada.",
-      `Comprovante #${String(c.id).padStart(3, "0")} · ${c.aluno}\n${c.turma}\n${c.vagas_restantes} vaga(s) restante(s). Transação confirmada.`,
-      "success",
-    );
-    $("#resposta-json").textContent = JSON.stringify(resposta, null, 2);
-    canal?.postMessage("atualizar");
+    const resposta = await matricular(dados);
+    const comprovante = resposta.comprovante;
+    mostrar('Matrícula confirmada.\nNúmero: ' + comprovante.id + '\nAluno: ' + comprovante.aluno + '\nTurma: ' + comprovante.turma, 'success');
+    canal?.postMessage('atualizar');
   } catch (erro) {
-    const falha =
-      erro instanceof Falha
-        ? erro
-        : new Falha(
-            "persistencia",
-            "Não foi possível acessar o armazenamento local. Nenhuma confirmação foi emitida.",
-          );
-    niveis(falha.nivel);
-    resultado(
-      `Não confirmada · ${nomes[falha.nivel] || falha.nivel}`,
-      falha.message,
-      "failure",
-    );
-    for (const [campo, mensagem] of Object.entries(falha.campos)) {
-      const e = $("#erro-" + campo);
-      if (e) e.textContent = mensagem;
-      form.elements[campo]?.setAttribute("aria-invalid", "true");
+    const falha = erro instanceof Falha ? erro : new Falha('persistencia', 'Não foi possível acessar o banco deste navegador.');
+    mostrar(nomes[falha.nivel] + ': ' + falha.message, 'failure');
+    for (const [campo, texto] of Object.entries(falha.campos)) {
+      const aviso = document.getElementById('erro-' + campo);
+      if (aviso) aviso.textContent = texto;
+      form.elements[campo]?.setAttribute('aria-invalid', 'true');
     }
-    $("#resposta-json").textContent = JSON.stringify(
-      {
-        sucesso: false,
-        nivel: falha.nivel,
-        mensagem: falha.message,
-        campos: falha.campos,
-      },
-      null,
-      2,
-    );
   } finally {
     botao.disabled = false;
-    try {
-      await atualizar();
-    } catch {
-      resultado(
-        "Armazenamento indisponível.",
-        "Verifique se o navegador permite usar IndexedDB.",
-        "failure",
-      );
-    }
+    try { await atualizar(); } catch { mostrar('Não foi possível carregar os dados.', 'failure'); }
   }
 });
-document.querySelectorAll("[data-cenario]").forEach((button) =>
-  button.addEventListener("click", () => {
-    const c = button.dataset.cenario;
-    form.elements.nome.value = "Ana Teste";
-    form.elements.email.value = c === "email" ? "ana@" : "ana@example.com";
+
+// Atalhos opcionais para demonstrar os erros em sala.
+document.querySelectorAll('[data-cenario]').forEach(botao => {
+  botao.addEventListener('click', () => {
+    const cenario = botao.dataset.cenario;
+    form.elements.nome.value = 'Ana Teste';
+    form.elements.email.value = cenario === 'email' ? 'ana@' : 'ana@example.com';
     const amanha = new Date();
     amanha.setDate(amanha.getDate() + 1);
-    const futura = `${amanha.getFullYear()}-${String(amanha.getMonth() + 1).padStart(2, "0")}-${String(amanha.getDate()).padStart(2, "0")}`;
-    form.elements.nascimento.value = c === "futuro" ? futura : "2000-01-15";
-    form.elements.turma_id.value = c === "fechada" ? "2" : "1";
-    resultado(
-      "Cenário preenchido.",
-      "Clique em “Validar e matricular” para executar as verificações.",
-    );
-    niveis();
-    document
-      .querySelectorAll(".field-error")
-      .forEach((e) => (e.textContent = ""));
-    form
-      .querySelectorAll("input,select")
-      .forEach((e) => e.removeAttribute("aria-invalid"));
-  }),
-);
-$("#reiniciar").addEventListener("click", async () => {
-  if (
-    !confirm(
-      "Apagar os dados fictícios desta demonstração neste navegador e repor as vagas?",
-    )
-  )
-    return;
+    const dataFutura = amanha.getFullYear() + '-' + String(amanha.getMonth() + 1).padStart(2, '0') + '-' + String(amanha.getDate()).padStart(2, '0');
+    form.elements.nascimento.value = cenario === 'futuro' ? dataFutura : '2000-01-15';
+    form.elements.turma_id.value = cenario === 'fechada' ? '2' : '1';
+    limparErros();
+    mostrar('Exemplo preenchido. Clique em Matricular.');
+  });
+});
+
+document.getElementById('reiniciar').addEventListener('click', async () => {
+  if (!confirm('Limpar as matrículas de teste e repor as vagas neste navegador?')) return;
   try {
     await reiniciar();
     form.reset();
-    niveis();
-    document
-      .querySelectorAll(".field-error")
-      .forEach((e) => (e.textContent = ""));
-    form
-      .querySelectorAll("input,select")
-      .forEach((e) => e.removeAttribute("aria-invalid"));
-    $("#resposta-json").textContent = "Nenhuma operação realizada.";
-    resultado(
-      "Demonstração reiniciada.",
-      "As vagas foram repostas e as matrículas locais removidas.",
-    );
+    limparErros();
     await atualizar();
-    canal?.postMessage("atualizar");
-  } catch {
-    resultado(
-      "Não foi possível reiniciar.",
-      "O navegador não permitiu alterar o banco local.",
-      "failure",
-    );
-  }
+    mostrar('Dados de teste removidos. As vagas foram repostas.');
+    canal?.postMessage('atualizar');
+  } catch { mostrar('Não foi possível limpar os dados.', 'failure'); }
 });
-atualizar().catch(() =>
-  resultado(
-    "Armazenamento indisponível.",
-    "Abra em um navegador com IndexedDB habilitado.",
-    "failure",
-  ),
-);
+
+canal?.addEventListener('message', () => atualizar().catch(() => {}));
+atualizar().catch(() => mostrar('O navegador não permitiu acessar o IndexedDB.', 'failure'));
